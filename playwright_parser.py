@@ -18,7 +18,13 @@ import uuid
 import requests
 import urllib3
 from typing import Optional
-from playwright.async_api import async_playwright, Page
+try:
+    from playwright.async_api import async_playwright, Page
+    _PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    async_playwright = None
+    Page = None
+    _PLAYWRIGHT_AVAILABLE = False
 
 from lavka_parser import parse_lavka
 
