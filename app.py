@@ -10,6 +10,7 @@ Fallback — публичные данные с сайтов сервисов.
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import traceback
+import os
 
 from delivery_checker import geocode_address
 from playwright_parser import parse_all_sync, PUBLIC_DATA
@@ -106,7 +107,16 @@ def geocode():
     return jsonify({"success": True, **geo})
 
 
+@app.route("/health")
+def health():
+    """Healthcheck endpoint для Railway."""
+    return jsonify({"status": "ok"}), 200
+
+
 if __name__ == "__main__":
-    print("🚀 Запуск сервера проверки доставки...")
-    print("📍 Откройте браузер: http://localhost:5050")
-    app.run(debug=True, host="0.0.0.0", port=5050)
+    port = int(os.environ.get("PORT", 5050))
+    debug = os.environ.get("FLASK_ENV") != "production"
+    print(f"🚀 Запуск сервера проверки доставки на порту {port}...")
+    if debug:
+        print(f"📍 Откройте браузер: http://localhost:{port}")
+    app.run(debug=debug, host="0.0.0.0", port=port)
