@@ -1,0 +1,32 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# Токены авторизации (содержат личные данные)
+.samokat_token.json
+.lavka_token.json
+.vkusvill_token.json
+.pyaterochka_token.json
+.magnit_token.json
+.ozon_token.json
+
+# Временные файлы исследования API
+explore_vkusvill*.py
+find_api_endpoints.py
+gen_html.py
+build_html.py
+write_html.py
+sniff_test.py
+test_apis.py
+test_playwright.py
+
+# Логи
+*.log
