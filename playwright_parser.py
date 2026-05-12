@@ -97,10 +97,10 @@ PUBLIC_DATA = {
         "assembly_price": 0,
     },
     "Пятёрочка": {
-        # Стоимость доставки зависит от зоны магазина (0–99 ₽), определяется динамически
-        "delivery_price": None,
-        "min_order": 600,
-        "free_from": None,       # зависит от зоны, не публикуется явно
+        # Стоимость доставки зависит от зоны магазина (99₽ от 500₽)
+        "delivery_price": 99,
+        "min_order": 500,
+        "free_from": 700,        # бесплатная доставка от 700₽
         "delivery_time": "30-60 мин",
         "packaging_price": 39,   # сбор заказа — 39 ₽ (по данным 5ka.ru)
         "assembly_price": 39,    # упаковка — 39 ₽ (по данным 5ka.ru)
@@ -452,7 +452,7 @@ def parse_pyaterochka(lat: float, lon: float) -> dict:
             api_got_data = True
             pub = PUBLIC_DATA["Пятёрочка"]
             result["available"] = has_delivery
-            result["delivery_price"] = None   # зависит от зоны
+            result["delivery_price"] = pub["delivery_price"]   # 99₽ от 500₽
             result["min_order"] = pub["min_order"]
             result["free_from"] = pub["free_from"]
             result["delivery_time"] = pub["delivery_time"]
