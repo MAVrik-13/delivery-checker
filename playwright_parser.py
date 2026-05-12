@@ -85,7 +85,7 @@ PUBLIC_DATA = {
         "min_order": 500,
         "free_from": None,
         "delivery_time": "15-30 мин",
-        "packaging_price": 0,
+        "packaging_price": 29,   # упаковка — 29 ₽ (по данным приложения Самоката)
         "assembly_price": 0,
     },
     "Ozon Fresh": {
@@ -382,12 +382,12 @@ def parse_samokat(lat: float, lon: float) -> dict:
     except Exception:
         pass
 
-    # Если упаковка/сборка не найдены в корзине — ставим 0
-    # (в некоторых городах/магазинах упаковка не взимается отдельно)
+    # Если упаковка/сборка не найдены в корзине — используем PUBLIC_DATA
+    # (API Самоката не возвращает информацию об упаковке)
     if result["packaging_price"] is None:
-        result["packaging_price"] = 0
+        result["packaging_price"] = PUBLIC_DATA["Самокат"]["packaging_price"]
     if result["assembly_price"] is None:
-        result["assembly_price"] = 0
+        result["assembly_price"] = PUBLIC_DATA["Самокат"]["assembly_price"]
 
     return _apply_fallback(result, "Самокат", api_got_data)
 
