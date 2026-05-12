@@ -27,6 +27,7 @@ except ImportError:
     _PLAYWRIGHT_AVAILABLE = False
 
 from lavka_parser import parse_lavka
+from pyaterochka_auth import get_valid_token
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -429,11 +430,14 @@ def parse_pyaterochka(lat: float, lon: float) -> dict:
     """
     Парсит условия доставки Пятёрочки через API 5d.5ka.ru.
     Проверяет доступность доставки по координатам.
-    Тарифы доставки недоступны без авторизации — показываем "0–99 ₽*".
+    Если есть токен авторизации — получает актуальные тарифы.
     """
     result = _make_result("Пятёрочка", "🔴")
     api_got_data = False
 
+    # Проверяем наличие токена авторизации
+    access_token = get_valid_token()
+    
     stores_url = f"https://5d.5ka.ru/api/orders/v1/orders/stores/?lon={lon}&lat={lat}"
     stores_headers = {
         "User-Agent": (
@@ -444,12 +448,49 @@ def parse_pyaterochka(lat: float, lon: float) -> dict:
         "Origin": "https://5ka.ru",
         "Referer": "https://5ka.ru/",
     }
+    
+    # Добавляем токен авторизации, если есть
+    if access_token:
+        stores_headers["Authorization"] = f"Bearer {access_token}"
+    
     try:
         resp = requests.get(stores_url, headers=stores_headers, timeout=8)
         if resp.status_code == 200:
             stores_data = resp.json()
             has_delivery = stores_data.get("has_delivery", True)
             api_got_data = True
+            
+            # Если есть авторизация, пробуем получить тарифы из ответа
+            if access_token:
+                # Проверяем, есть ли тарифы в ответе API
+                delivery_price = stores_data.get("delivery_price")
+                min_order = stores_data.get("min_order")
+                free_from = stores_data.get("free_delivery_from")
+                
+                if delivery_price is not None and min_order is not None:
+                    # Используем данные из API
+                    result["available"] = has_delivery
+                    result["delivery_price"] = delivery_price
+                    result["min_order"] = min_order
+                    result["free_from"] = free_from
+                    result["delivery_time"] = stores_data.get("delivery_time", "30-60 мин")
+                    result["packaging_price"] = stores_data.get("packaging_price", 39)
+                    result["assembly_price"] = stores_data.get("assembly_price", 39)
+                    shop_addr = stores_data.get("shop_address", "н/д")
+                    result["note"] = (
+                        f"Доставка {'доступна' if has_delivery else 'недоступна'} "
+                        f"(магазин: {shop_addr}). "
+                        f"Актуальные тарифы с учётом авторизации."
+                    )
+                    result["data_source"] = "api_authorized"
+                    result["delivery_tiers"] = _compute_tiers(
+                        result["delivery_price"],
+                        result["min_order"],
+                        result["free_from"],
+                    )
+                    return result
+            
+            # Без авторизации или если тарифы не получены — используем PUBLIC_DATA
             pub = PUBLIC_DATA["Пятёрочка"]
             result["available"] = has_delivery
             result["delivery_price"] = pub["delivery_price"]   # 99₽ от 500₽

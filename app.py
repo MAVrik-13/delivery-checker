@@ -14,6 +14,7 @@ import os
 
 from delivery_checker import geocode_address
 from playwright_parser import parse_all_sync, PUBLIC_DATA
+from pyaterochka_auth import request_sms, confirm_sms, get_token_info, clear_token
 
 app = Flask(__name__)
 CORS(app)
@@ -105,6 +106,70 @@ def geocode():
     if not geo:
         return jsonify({"success": False, "error": "Адрес не найден"}), 404
     return jsonify({"success": True, **geo})
+
+
+@app.route("/api/pyaterochka/send-sms", methods=["POST"])
+def pyaterochka_send_sms():
+    """Отправляет SMS-код для авторизации в Пятёрочке."""
+    data = request.get_json()
+    if not data or not data.get("phone"):
+        return jsonify({"success": False, "error": "Номер телефона не указан"}), 400
+    
+    phone = data["phone"].strip()
+    if not phone:
+        return jsonify({"success": False, "error": "Номер телефона не может быть пустым"}), 400
+    
+    try:
+        result = request_sms(phone)
+        return jsonify(result)
+    except Exception as e:
+        print(f"[ERROR] pyaterochka_send_sms failed: {e}\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/pyaterochka/confirm-sms", methods=["POST"])
+def pyaterochka_confirm_sms():
+    """Подтверждает SMS-код и получает токен Пятёрочки."""
+    data = request.get_json()
+    if not data or not data.get("phone") or not data.get("sms_code"):
+        return jsonify({"success": False, "error": "Номер телефона и SMS-код обязательны"}), 400
+    
+    phone = data["phone"].strip()
+    sms_code = data["sms_code"].strip()
+    api_info = data.get("api_info")
+    cookies = data.get("cookies")
+    
+    if not phone or not sms_code:
+        return jsonify({"success": False, "error": "Номер телефона и SMS-код не могут быть пустыми"}), 400
+    
+    try:
+        result = confirm_sms(phone, sms_code, api_info, cookies)
+        return jsonify(result)
+    except Exception as e:
+        print(f"[ERROR] pyaterochka_confirm_sms failed: {e}\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/pyaterochka/token-info", methods=["GET"])
+def pyaterochka_token_info():
+    """Возвращает информацию о текущем токене авторизации Пятёрочки."""
+    try:
+        info = get_token_info()
+        return jsonify(info)
+    except Exception as e:
+        print(f"[ERROR] pyaterochka_token_info failed: {e}\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/pyaterochka/logout", methods=["POST"])
+def pyaterochka_logout():
+    """Удаляет токен авторизации Пятёрочки."""
+    try:
+        clear_token()
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"[ERROR] pyaterochka_logout failed: {e}\n{traceback.format_exc()}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/health")

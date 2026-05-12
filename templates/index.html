@@ -235,6 +235,106 @@
         .pkg-cell { background: #faf5ff; }
         .asm-cell { background: #f0f9ff; }
 
+        /* ── Форма авторизации Пятёрочки ── */
+        .auth-card {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.15);
+            margin-bottom: 20px;
+            border-left: 4px solid #e80000;
+        }
+        .auth-card.show { display: block; }
+
+        .auth-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .auth-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .auth-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+        .auth-close:hover { color: #374151; }
+
+        .auth-step { display: none; }
+        .auth-step.active { display: block; }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            color: #111827;
+            transition: border-color .2s, box-shadow .2s;
+            outline: none;
+            margin-bottom: 12px;
+        }
+        .auth-input:focus { border-color: #e80000; box-shadow: 0 0 0 3px rgba(232,0,0,.1); }
+        .auth-input::placeholder { color: #9ca3af; }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #e80000 0%, #c40000 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .auth-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(232,0,0,.4); }
+        .auth-btn:active:not(:disabled) { transform: translateY(0); }
+        .auth-btn:disabled { opacity: .65; cursor: not-allowed; }
+
+        .auth-note {
+            font-size: .8rem;
+            color: #6b7280;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+        .auth-note a { color: #e80000; text-decoration: none; }
+        .auth-note a:hover { text-decoration: underline; }
+
+        .auth-status {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: .9rem;
+        }
+        .auth-status.show { display: block; }
+        .auth-status.success { background: #d1fae5; color: #065f46; }
+        .auth-status.error { background: #fee2e2; color: #991b1b; }
+
+        .auth-link {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: .85rem;
+            color: #e80000;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .auth-link:hover { text-decoration: underline; }
+
         /* ── Легенда ── */
         .legend {
             display: none;
@@ -302,6 +402,70 @@
         </div>
     </div>
 
+    <!-- Форма авторизации Пятёрочки -->
+    <div class="auth-card" id="authCard">
+        <div class="auth-header">
+            <div class="auth-title">🔴 Авторизация в Пятёрочке</div>
+            <button class="auth-close" onclick="closeAuth()">×</button>
+        </div>
+        
+        <div class="auth-status" id="authStatus"></div>
+        
+        <!-- Шаг 1: Ввод телефона -->
+        <div class="auth-step active" id="authStep1">
+            <input
+                type="tel"
+                id="phoneInput"
+                class="auth-input"
+                placeholder="+7 (999) 123-45-67"
+                maxlength="18"
+            />
+            <button class="auth-btn" id="sendSmsBtn" onclick="sendSms()">
+                📱 Отправить SMS-код
+            </button>
+            <div class="auth-note">
+                Введите номер телефона для получения актуальных условий доставки Пятёрочки.
+                <br>Данные используются только для авторизации в API Пятёрочки.
+            </div>
+        </div>
+        
+        <!-- Шаг 2: Ввод SMS-кода -->
+        <div class="auth-step" id="authStep2">
+            <input
+                type="text"
+                id="smsInput"
+                class="auth-input"
+                placeholder="Введите код из SMS"
+                maxlength="6"
+            />
+            <button class="auth-btn" id="confirmSmsBtn" onclick="confirmSms()">
+                ✅ Подтвердить код
+            </button>
+            <div class="auth-note">
+                Код действителен в течение 5 минут.
+                <br><a href="#" onclick="resendSms(); return false;">Отправить код повторно</a>
+            </div>
+        </div>
+        
+        <!-- Шаг 3: Успешная авторизация -->
+        <div class="auth-step" id="authStep3">
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 3rem; margin-bottom: 12px;">✅</div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: #065f46; margin-bottom: 8px;">
+                    Авторизация успешна!
+                </div>
+                <div style="font-size: .9rem; color: #6b7280;" id="authPhone"></div>
+                <div style="font-size: .8rem; color: #9ca3af; margin-top: 12px;" id="authExpires"></div>
+            </div>
+            <button class="auth-btn" onclick="closeAuth()">
+                Закрыть
+            </button>
+            <div class="auth-link" onclick="logoutPyaterochka()">
+                Выйти из аккаунта
+            </div>
+        </div>
+    </div>
+
     <!-- Статус -->
     <div class="status-bar" id="statusBar">
         <div class="spinner" id="statusSpinner"></div>
@@ -338,7 +502,7 @@
     <!-- Легенда -->
     <div class="legend" id="legend">
         <p>⚠️ <strong>Важно:</strong> данные получены через API сервисов в реальном времени. Точные условия зависят от адреса и наличия магазина в зоне доставки.</p>
-        <p>🟡 <strong>Самокат</strong> — прямой API. 🔵 <strong>Яндекс Лавка</strong> — прямой API (бесплатная доставка = акция, обычная цена указана в tooltip). 🟢 <strong>Магнит</strong> — прямой API. 🔴 <strong>Пятёрочка</strong> — прямой API (стоимость доставки 0–99 ₽ зависит от зоны).</p>
+        <p>🟡 <strong>Самокат</strong> — прямой API. 🔵 <strong>Яндекс Лавка</strong> — прямой API (бесплатная доставка = акция, обычная цена указана в tooltip). 🟢 <strong>Магнит</strong> — прямой API. 🔴 <strong>Пятёрочка</strong> — прямой API (стоимость доставки 0–99 ₽ зависит от зоны). <a href="#" onclick="openAuth(); return false;" style="color: #e80000; text-decoration: underline;">Авторизоваться для актуальных данных</a>.</p>
         <p>🟢 <strong>● API</strong> — данные из API сервиса. 🟡 <strong>● Публичные</strong> — актуальные данные с сайтов (если API недоступен: Ozon Fresh, ВкусВилл).</p>
         <p>📦 <strong>Упаковка и сборка</strong> — стоимость упаковочных материалов (📦) и комплектации заказа (⚙️). Самокат: 29 ₽ за упаковку. Пятёрочка: 39 ₽ за упаковку + 39 ₽ за сборку. Магнит: 29 ₽ за упаковку.</p>
     </div>
@@ -557,6 +721,198 @@
 
     document.getElementById('addressInput').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') checkDelivery();
+    });
+
+    // ── Авторизация Пятёрочки ──
+    
+    let authApiInfo = null;
+    let authCookies = null;
+    
+    function openAuth() {
+        document.getElementById('authCard').className = 'auth-card show';
+        checkAuthStatus();
+    }
+    
+    function closeAuth() {
+        document.getElementById('authCard').className = 'auth-card';
+    }
+    
+    function showAuthStep(step) {
+        document.getElementById('authStep1').className = 'auth-step';
+        document.getElementById('authStep2').className = 'auth-step';
+        document.getElementById('authStep3').className = 'auth-step';
+        document.getElementById('authStep' + step).className = 'auth-step active';
+    }
+    
+    function showAuthStatus(type, message) {
+        const status = document.getElementById('authStatus');
+        status.className = 'auth-status show ' + type;
+        status.textContent = message;
+    }
+    
+    function hideAuthStatus() {
+        document.getElementById('authStatus').className = 'auth-status';
+    }
+    
+    async function checkAuthStatus() {
+        try {
+            const resp = await fetch('/api/pyaterochka/token-info');
+            const data = await resp.json();
+            
+            if (data.authorized) {
+                showAuthStep(3);
+                document.getElementById('authPhone').textContent = `Телефон: ${data.phone}`;
+                document.getElementById('authExpires').textContent =
+                    `Действует ${data.expires_in_days} дн.`;
+                hideAuthStatus();
+            } else {
+                showAuthStep(1);
+            }
+        } catch (err) {
+            console.error('Ошибка проверки статуса авторизации:', err);
+            showAuthStep(1);
+        }
+    }
+    
+    async function sendSms() {
+        const phoneInput = document.getElementById('phoneInput');
+        const btn = document.getElementById('sendSmsBtn');
+        const phone = phoneInput.value.trim();
+        
+        if (!phone) {
+            phoneInput.focus();
+            phoneInput.style.borderColor = '#ef4444';
+            setTimeout(() => { phoneInput.style.borderColor = ''; }, 1500);
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = '⏳ Отправляем...';
+        hideAuthStatus();
+        
+        try {
+            const resp = await fetch('/api/pyaterochka/send-sms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone }),
+            });
+            const data = await resp.json();
+            
+            if (data.success) {
+                authApiInfo = data.api_info;
+                authCookies = data.cookies;
+                showAuthStep(2);
+                document.getElementById('smsInput').focus();
+            } else {
+                showAuthStatus('error', data.error || 'Ошибка отправки SMS');
+            }
+        } catch (err) {
+            showAuthStatus('error', `Ошибка соединения: ${err.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '📱 Отправить SMS-код';
+        }
+    }
+    
+    async function confirmSms() {
+        const smsInput = document.getElementById('smsInput');
+        const btn = document.getElementById('confirmSmsBtn');
+        const smsCode = smsInput.value.trim();
+        
+        if (!smsCode) {
+            smsInput.focus();
+            smsInput.style.borderColor = '#ef4444';
+            setTimeout(() => { smsInput.style.borderColor = ''; }, 1500);
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = '⏳ Проверяем...';
+        hideAuthStatus();
+        
+        try {
+            const phone = document.getElementById('phoneInput').value.trim();
+            const resp = await fetch('/api/pyaterochka/confirm-sms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    phone,
+                    sms_code: smsCode,
+                    api_info: authApiInfo,
+                    cookies: authCookies,
+                }),
+            });
+            const data = await resp.json();
+            
+            if (data.success) {
+                showAuthStep(3);
+                document.getElementById('authPhone').textContent = `Телефон: ${phone}`;
+                document.getElementById('authExpires').textContent = 'Авторизация успешна!';
+            } else {
+                showAuthStatus('error', data.error || 'Неверный код');
+            }
+        } catch (err) {
+            showAuthStatus('error', `Ошибка соединения: ${err.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '✅ Подтвердить код';
+        }
+    }
+    
+    async function resendSms() {
+        const phone = document.getElementById('phoneInput').value.trim();
+        if (!phone) return;
+        
+        showAuthStep(1);
+        await sendSms();
+    }
+    
+    async function logoutPyaterochka() {
+        try {
+            await fetch('/api/pyaterochka/logout', { method: 'POST' });
+            showAuthStep(1);
+            hideAuthStatus();
+        } catch (err) {
+            showAuthStatus('error', `Ошибка выхода: ${err.message}`);
+        }
+    }
+    
+    // Форматирование телефона при вводе
+    document.getElementById('phoneInput').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        if (value.startsWith('8')) {
+            value = '7' + value.slice(1);
+        }
+        
+        let formatted = '';
+        if (value.length > 0) {
+            formatted = '+' + value[0];
+            if (value.length > 1) {
+                formatted += ' (' + value.slice(1, 4);
+            }
+            if (value.length > 4) {
+                formatted += ') ' + value.slice(4, 7);
+            }
+            if (value.length > 7) {
+                formatted += '-' + value.slice(7, 9);
+            }
+            if (value.length > 9) {
+                formatted += '-' + value.slice(9, 11);
+            }
+        }
+        
+        e.target.value = formatted;
+    });
+    
+    // Обработка Enter в полях авторизации
+    document.getElementById('phoneInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') sendSms();
+    });
+    
+    document.getElementById('smsInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') confirmSms();
     });
 </script>
 </body>
