@@ -82,7 +82,7 @@ def _find_browser() -> Optional[str]:
 PUBLIC_DATA = {
     "Самокат": {
         "delivery_price": 0,
-        "min_order": 500,
+        "min_order": 100,  # минимальная корзина может варьироваться по зонам (100-500₽)
         "free_from": None,
         "delivery_time": "15-30 мин",
         "packaging_price": 29,   # упаковка — 29 ₽ (по данным приложения Самоката)
